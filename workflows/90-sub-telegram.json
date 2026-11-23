@@ -1,0 +1,36 @@
+{
+ "name": "Kit · Sub · Telegram",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "entrada",
+   "name": "Entrada",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1,
+   "position": [0, 0]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.telegram.org/bot' + $env.TELEGRAM_TOKEN + '/sendMessage' }}",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": { "timeout": 15000 }
+   },
+   "id": "enviar",
+   "name": "sendMessage",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.5,
+   "position": [260, 0],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000,
+   "onError": "continueRegularOutput"
+  }
+ ],
+ "connections": {
+  "Entrada": { "main": [[{ "node": "sendMessage", "type": "main", "index": 0 }]] }
+ },
+ "settings": { "executionOrder": "v1" }
+}

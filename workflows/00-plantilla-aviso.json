@@ -1,0 +1,53 @@
+{
+ "name": "Kit · 0 Plantilla aviso",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "kit-aviso",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "webhook",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2.1,
+   "position": [0, 0]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Payload canónico del sub de Telegram (D14: el payload se monta\n// aquí; el envío vive solo dentro del sub).\nconst body = $input.first().json.body || {};\nreturn [{ json: { chat_id: body.chat_id || $env.ALERT_CHAT_ID, text: body.text || 'Aviso sin texto' } }];"
+   },
+   "id": "payload",
+   "name": "Payload",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [260, 0]
+  },
+  {
+   "parameters": {
+    "operation": "call_workflow",
+    "source": "database",
+    "workflowId": { "value": "__SUB__:Kit · Sub · Telegram" },
+    "mode": "once",
+    "options": { "waitForSubWorkflow": true }
+   },
+   "id": "enviar",
+   "name": "Enviar",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.1,
+   "position": [520, 0],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000
+  }
+ ],
+ "connections": {
+  "Webhook": { "main": [[{ "node": "Payload", "type": "main", "index": 0 }]] },
+  "Payload": { "main": [[{ "node": "Enviar", "type": "main", "index": 0 }]] }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "errorWorkflow": "__SUB__:Kit · Sub · Errores"
+ }
+}
