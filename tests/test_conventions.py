@@ -18,10 +18,7 @@ MARCADOR = "__SUB__:"
 
 
 def _workflows() -> list[tuple[str, dict]]:
-    return [
-        (f.name, json.loads(f.read_text(encoding="utf-8")))
-        for f in sorted(DIR.glob("*.json"))
-    ]
+    return [(f.name, json.loads(f.read_text(encoding="utf-8"))) for f in sorted(DIR.glob("*.json"))]
 
 
 def _padres() -> list[tuple[str, dict]]:
@@ -33,9 +30,7 @@ def _http(workflow: dict) -> list[dict]:
 
 
 def _execute(workflow: dict) -> list[dict]:
-    return [
-        n for n in workflow["nodes"] if n["type"] == "n8n-nodes-base.executeWorkflow"
-    ]
+    return [n for n in workflow["nodes"] if n["type"] == "n8n-nodes-base.executeWorkflow"]
 
 
 @pytest.fixture(scope="module")
@@ -50,12 +45,8 @@ class TestReintentosYTimeouts:
     def test_http_reintenta_con_backoff(self, workflows):
         for name, workflow in workflows:
             for node in _http(workflow):
-                assert node.get("retryOnFail") is True, (
-                    f"{name}/{node['name']} sin retry"
-                )
-                assert int(node.get("maxTries", 0)) >= 3, (
-                    f"{name}/{node['name']} <3 intentos"
-                )
+                assert node.get("retryOnFail") is True, f"{name}/{node['name']} sin retry"
+                assert int(node.get("maxTries", 0)) >= 3, f"{name}/{node['name']} <3 intentos"
                 assert int(node.get("waitBetweenTries", 0)) >= 1000, (
                     f"{name}/{node['name']} sin backoff"
                 )
@@ -69,9 +60,7 @@ class TestReintentosYTimeouts:
     def test_execute_reintenta(self, workflows):
         for name, workflow in workflows:
             for node in _execute(workflow):
-                assert node.get("retryOnFail") is True, (
-                    f"{name}/{node['name']} sin retry"
-                )
+                assert node.get("retryOnFail") is True, f"{name}/{node['name']} sin retry"
                 assert int(node.get("maxTries", 0)) >= 3
                 assert int(node.get("waitBetweenTries", 0)) >= 1000
 
@@ -82,30 +71,21 @@ class TestFalloControlado:
             for node in _http(workflow):
                 url = str((node.get("parameters") or {}).get("url", ""))
                 if "telegram.org" in url:
-                    assert node.get("onError") == "continueRegularOutput", (
-                        f"{name}/{node['name']}"
-                    )
+                    assert node.get("onError") == "continueRegularOutput", f"{name}/{node['name']}"
 
 
 class TestSubWorkflows:
     def test_padres_usan_marcadores_y_error_workflow(self):
         subs_conocidos = {
-            json.loads(f.read_text(encoding="utf-8"))["name"]
-            for f in DIR.glob("90-*.json")
+            json.loads(f.read_text(encoding="utf-8"))["name"] for f in DIR.glob("90-*.json")
         }
         for name, workflow in _padres():
             settings = workflow.get("settings", {})
             error_workflow = str(settings.get("errorWorkflow", ""))
             if not error_workflow.startswith(MARCADOR):
-                pytest.fail(
-                    f"{name} sin settings.errorWorkflow → {MARCADOR}<sub de errores>"
-                )
+                pytest.fail(f"{name} sin settings.errorWorkflow → {MARCADOR}<sub de errores>")
             for node in _execute(workflow):
-                ref = (
-                    (node.get("parameters") or {})
-                    .get("workflowId", {})
-                    .get("value", "")
-                )
+                ref = (node.get("parameters") or {}).get("workflowId", {}).get("value", "")
                 assert ref.startswith(MARCADOR), f"{name}/{node['name']} sin marcador"
                 assert ref[len(MARCADOR) :] in subs_conocidos, (
                     f"{name}/{node['name']} → sub desconocido {ref}"
@@ -116,6 +96,4 @@ class TestSubWorkflows:
             for node in workflow["nodes"]:
                 code = str((node.get("parameters") or {}).get("jsCode", ""))
                 if "createHmac" in code:
-                    assert name.startswith("90-"), (
-                        f"{name}/{node['name']}: HMAC fuera de un sub"
-                    )
+                    assert name.startswith("90-"), f"{name}/{node['name']}: HMAC fuera de un sub"

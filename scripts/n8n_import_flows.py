@@ -34,9 +34,7 @@ def _api(method: str, path: str, body: dict | None = None, *, base: str, key: st
         with urllib.request.urlopen(request, timeout=60) as response:
             return json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as exc:
-        raise RuntimeError(
-            f"{method} {path} → HTTP {exc.code}: {exc.read()[:200]}"
-        ) from exc
+        raise RuntimeError(f"{method} {path} → HTTP {exc.code}: {exc.read()[:200]}") from exc
 
 
 def _resolve_markers(workflow: dict, sub_ids: dict[str, str]) -> None:
@@ -68,15 +66,11 @@ def import_flows(folder: str | Path, *, base: str, key: str) -> dict[str, str]:
         existing = None
         if workflow.get("id"):
             try:
-                existing = _api(
-                    "GET", f"/workflows/{workflow['id']}", base=base, key=key
-                )
+                existing = _api("GET", f"/workflows/{workflow['id']}", base=base, key=key)
             except RuntimeError:
                 existing = None
         if existing:
-            result = _api(
-                "PUT", f"/workflows/{workflow['id']}", payload, base=base, key=key
-            )
+            result = _api("PUT", f"/workflows/{workflow['id']}", payload, base=base, key=key)
         else:
             result = _api("POST", "/workflows", payload, base=base, key=key)
         sub_ids[workflow["name"]] = result["id"]
